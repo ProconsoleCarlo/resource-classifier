@@ -1,13 +1,11 @@
 package it.proconsole.resourceclassifier;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import it.proconsole.resourceclassifier.file.FileInterpreter;
 
-@SpringBootApplication
 public class ResourceClassifierApplication {
-
   public static void main(String[] args) {
-    SpringApplication.run(ResourceClassifierApplication.class, args);
-  }
+    var fileInterpreter = new FileInterpreter("E://RV");
 
+    System.err.println(fileInterpreter.interpret());
+  }
 }
