@@ -1,10 +1,13 @@
 package it.proconsole.resourceclassifier.file;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FilenameUtils;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +17,9 @@ import java.util.stream.Collectors;
 
 public class FileInterpreter {
   private static final Pattern TAGS_REGEX = Pattern.compile("([a-zA-Z]\\d{1,2})");
+  private static final String ATTRIBUTE_EXT = ".json";
+
+  private final ObjectMapper mapper = new ObjectMapper();
 
   private final String rootPath;
 
@@ -22,15 +28,37 @@ public class FileInterpreter {
   }
 
   public List<TaggedFile> interpret() {
-    return readFiles().stream().map(it -> new TaggedFile(it, Collections.emptySet(), extractTags(it))).toList();
+    return readFiles().stream()
+            .map(it -> new TaggedFile(it, Collections.emptySet(), extractTags(it)))
+            .toList();
+  }
+
+  public void saveAttributes(List<TaggedFile> files) {
+    files.forEach(
+            it -> {
+              try {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(it.path().resolveSibling(it.path().getFileName() + ATTRIBUTE_EXT).toFile(), it);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+            }
+    );
   }
 
   private List<Path> readFiles() {
-    try (var files = Files.walk(Path.of(rootPath))) {
-      return files.filter(Files::isRegularFile).toList();
+    try (var files = Files.walk(Paths.get(this.getClass().getResource(rootPath).toURI()))) {
+      return files.filter(Files::isRegularFile)
+              .filter(it -> !isAttributeFile(it))
+              .toList();
     } catch (IOException e) {
       throw new RuntimeException(e);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  private static boolean isAttributeFile(Path it) {
+    return it.getFileName().toString().endsWith(ATTRIBUTE_EXT);
   }
 
   private Map<String, Integer> extractTags(Path path) {
