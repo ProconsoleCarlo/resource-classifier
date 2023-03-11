@@ -5,6 +5,7 @@ import org.apache.commons.io.FilenameUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.MatchResult;
@@ -20,12 +21,8 @@ public class FileInterpreter {
     this.rootPath = rootPath;
   }
 
-  private static String fileNameFrom(Path path) {
-    return FilenameUtils.removeExtension(path.getFileName().toString());
-  }
-
   public List<TaggedFile> interpret() {
-    return readFiles().stream().map(it -> new TaggedFile(it, extractTags(it))).toList();
+    return readFiles().stream().map(it -> new TaggedFile(it, Collections.emptySet(), extractTags(it))).toList();
   }
 
   private List<Path> readFiles() {
@@ -43,5 +40,9 @@ public class FileInterpreter {
                     it -> it.substring(0, 1),
                     it -> Integer.valueOf(it.substring(1))
             ));
+  }
+
+  private static String fileNameFrom(Path path) {
+    return FilenameUtils.removeExtension(path.getFileName().toString());
   }
 }
